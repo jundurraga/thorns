@@ -4,8 +4,8 @@
 """This module implements permanent store for data.
 
 """
-from __future__ import division, print_function, absolute_import
-from __future__ import unicode_literals
+
+
 
 import os
 import datetime
@@ -15,7 +15,7 @@ from sys import version
 import shelve
 import collections
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle
 
@@ -160,7 +160,7 @@ def dumpdb(data, name='dump', workdir='work', backend='hdf', kwargs=None):
         os.makedirs(workdir)
 
     if kwargs is not None:
-        for k,v in kwargs.items():
+        for k,v in list(kwargs.items()):
             data[k] = v
         data = data.set_index(list(kwargs), append=True)
 

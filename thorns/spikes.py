@@ -29,7 +29,7 @@ seconds.
 
 """
 
-from __future__ import division, print_function, absolute_import
+
 
 import random
 import numpy as np
@@ -49,7 +49,7 @@ def select_trains(spike_trains, **kwargs):
 
     """
     mask = np.ones(len(spike_trains), dtype=bool)
-    for key,val in kwargs.items():
+    for key,val in list(kwargs.items()):
         mask = mask & np.array(spike_trains[key] == val)
 
     selected = spike_trains[mask]
@@ -81,7 +81,7 @@ def make_trains(data, **kwargs):
 
     elif isinstance(data, dict): # brian like spiketimes (dict of arrays)
         # TODO: test this case
-        arrays = [a for a in data.itervalues()]
+        arrays = [a for a in data.values()]
         trains = _arrays_to_trains(arrays, **meta)
 
     elif ('brian' in sys.modules) and isinstance(data, sys.modules['brian'].SpikeMonitor):
@@ -89,11 +89,11 @@ def make_trains(data, **kwargs):
 
         meta.setdefault('duration', float(data.clock.t/brian.second))
 
-        spikes = [np.array(spiketimes/brian.second) for spiketimes in data.spiketimes.itervalues()]
+        spikes = [np.array(spiketimes/brian.second) for spiketimes in data.spiketimes.values()]
         trains = _arrays_to_trains(spikes, **meta)
 
     elif len(data) == 0:
-        trains = pd.DataFrame(columns=(['spikes'] + meta.keys()))
+        trains = pd.DataFrame(columns=(['spikes'] + list(meta.keys())))
 
     elif isinstance(data[0], Iterable):
         trains = _arrays_to_trains(data, **meta)

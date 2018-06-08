@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from __future__ import division
+
 
 
 raise NotImplementedError
@@ -197,6 +197,6 @@ def plot_signal(fs, s):
 if __name__ == "__main__":
     import doctest
 
-    print "Doctest start:"
+    print("Doctest start:")
     doctest.testmod()
-    print "done."
+    print("done.")

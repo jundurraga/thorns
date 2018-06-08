@@ -6,7 +6,7 @@ formats.
 
 """
 
-from __future__ import print_function, division, absolute_import
+
 
 
 import struct
@@ -81,7 +81,7 @@ def read_brainwaref32(filename, stimparams=None):
 
     # Fill in column titles if given
     if stimparams is not None:
-        for k,v in stimparams.iteritems():
+        for k,v in stimparams.items():
             name = "f%i" % k
             dataset = dataset.rename(columns={name: v})
 

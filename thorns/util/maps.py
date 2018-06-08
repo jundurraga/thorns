@@ -5,13 +5,13 @@
 caching.
 
 """
-from __future__ import division, print_function, absolute_import
-from __future__ import unicode_literals
+
+
 
 from sys import version
 
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle
 
@@ -472,9 +472,9 @@ def map(
 
     ### Convert a dict of lists into a list of dicts
     if isinstance(space, dict):
-        all_values = itertools.product(*space.values())
-        keys = space.keys()
-        iterable = [dict(zip(keys, values)) for values in all_values]
+        all_values = itertools.product(*list(space.values()))
+        keys = list(space.keys())
+        iterable = [dict(list(zip(keys, values))) for values in all_values]
     else:
         iterable = space
 
