@@ -258,9 +258,6 @@ def correlation_index(
     return ci
 
 
-
-
-
 def shuffled_autocorrelogram(
         spike_trains,
         coincidence_window=50e-6,
@@ -316,8 +313,75 @@ def shuffled_autocorrelogram(
     )
 
     if normalize:
-        firing_rate = firing_rate(spike_trains)
-        norm = trial_num*(trial_num-1) * firing_rate**2 * coincidence_window * duration
+        firing_rate_input = firing_rate(spike_trains)
+        norm = trial_num*(trial_num-1) * firing_rate_input**2 * coincidence_window * duration
+        sac_half = hist / norm
+    else:
+        sac_half = hist
+
+    sac = np.concatenate( (sac_half[::-1][0:-1], sac_half) )
+    bin_edges = np.concatenate( (-bin_edges[::-1][1:-1], bin_edges) )
+    return sac, bin_edges
+
+
+def shuffled_cross_correlogram(
+        spike_trains_1,
+        spike_trains_2,
+        coincidence_window=50e-6,
+        analysis_window=5e-3,
+        normalize=True):
+    """Calculate shuffled autocorrelogram (SAC) of `spike_trains` as
+    described in [Joris2006]_.
+
+
+
+    Returns
+    -------
+    ndarray
+        Histogram values.
+    ndarray
+        Bin edges.
+
+
+    References
+    ----------
+
+    .. [Joris2006] Joris, P. X., Louage, D. H., Cardoen, L., & van der
+       Heijden, M. (2006). Correlation index: a new metric to quantify
+       temporal coding. Hearing research, 216, 19-30.
+
+    """
+
+    duration = np.maximum(get_duration(spike_trains_1), get_duration(spike_trains_2))
+    trains_1 = spike_trains_1['spikes']
+    trains_2 = spike_trains_2['spikes']
+    trial_num_1 = len(trains_1)
+    trial_num_2 = len(trains_2)
+
+    nbins = int(np.ceil(analysis_window / coincidence_window))
+
+    cum = []
+    for i, train_1 in enumerate(trains_1):
+        all_spikes_trains_2 = np.concatenate(trains_2.values)
+        for spike in train_1:
+            centered = all_spikes_trains_2 - spike
+            trimmed = centered[
+                (centered >= 0) & (centered < nbins*coincidence_window)
+            ]
+            cum.append(trimmed)
+
+    cum = np.concatenate(cum)
+
+    hist, bin_edges = np.histogram(
+        cum,
+        bins=nbins,
+        range=(0, nbins*coincidence_window)
+    )
+
+    if normalize:
+        firing_rate_1 = firing_rate(spike_trains_1)
+        firing_rate_2 = firing_rate(spike_trains_2)
+        norm = trial_num_1 * trial_num_2 * firing_rate_1*firing_rate_2 * coincidence_window * duration
         sac_half = hist / norm
     else:
         sac_half = hist
@@ -325,12 +389,52 @@ def shuffled_autocorrelogram(
     sac = np.concatenate( (sac_half[::-1][0:-1], sac_half) )
     bin_edges = np.concatenate( (-bin_edges[::-1][1:-1], bin_edges) )
 
-
     return sac, bin_edges
 
 
+def sum_cor_diff_corr(
+        spike_trains_1,
+        spike_trains_2,
+        coincidence_window=50e-6,
+        analysis_window=5e-3,
+        normalize=True):
+    """Calculate sumcor and difcor  of `spike_trains` as
+    described in [Joris2006]_.
+
+    Returns
+    -------
+    ndarray
+        Histogram values.
+    ndarray
+        Bin edges.
 
 
+    References
+    ----------
+
+    .. [Joris2006] Joris, P. X., Louage, D. H., Cardoen, L., & van der
+       Heijden, M. (2006). Correlation index: a new metric to quantify
+       temporal coding. Hearing research, 216, 19-30.
+
+    """
+    sac_1, bin_edges_1 = shuffled_autocorrelogram(spike_trains_1,
+                                                  coincidence_window=coincidence_window,
+                                                  analysis_window=analysis_window,
+                                                  normalize=normalize)
+    sac_2, bin_edges_2 = shuffled_autocorrelogram(spike_trains_2,
+                                                  coincidence_window=coincidence_window,
+                                                  analysis_window=analysis_window,
+                                                  normalize=normalize)
+
+    x_sac, bin_edges_3 = shuffled_cross_correlogram(spike_trains_1,
+                                                    spike_trains_2,
+                                                    coincidence_window=coincidence_window,
+                                                    analysis_window=analysis_window,
+                                                    normalize=normalize)
+    sumcor = ((sac_1 + sac_2) / 2.0 + x_sac) / 2.0
+    difcor = (sac_1 + sac_2) / 2.0 - x_sac
+
+    return sumcor, difcor, sac_1, sac_2, x_sac, bin_edges_3
 
 
 def period_histogram(

@@ -49,6 +49,8 @@ from thorns.spikes import (
 from thorns.stats import (
     get_duration,
     shuffled_autocorrelogram,
+    shuffled_cross_correlogram,
+    sum_cor_diff_corr,
     correlation_index,
     firing_rate,
     psth,
